@@ -1,0 +1,1 @@
+Je bent vrij in de keuze van de programmeertaal/omgeving waarin je de applicatie maakt. Deze applicatie demonstreer je tijdens het assessment in week 9, je laat minimaal zien dat je gegevens van medewerkers kunt ophalen uit de database van Outdoor Paradise en dat gegevens van medewerkers verwijderd, toegevoegd en gewijzigd kunnen worden.

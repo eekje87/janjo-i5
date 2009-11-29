@@ -1,0 +1,1 @@
+Maak gebruik van de notatiewijze van hoofdstuk 3 uit De Tré, Principes van databases. Voor de overzichtelijkheid kun je ervoor kiezen entiteittypen met bijbehorende attributen zonder de relatietypen weer te geven en vervolgens entiteittypen zonder attributen met de relatietypen.

@@ -1,0 +1,1 @@
+Gebruik de notatiewijze van de reader SQL en Databases van het I-1 blok

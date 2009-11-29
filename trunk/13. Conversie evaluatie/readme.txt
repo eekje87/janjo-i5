@@ -1,0 +1,1 @@
+Hierin beschrijf je kort hoe de conversie is verlopen. Met name de punten 3 en 4 van het conversieplan worden hier besproken. Tot slot beschrijf je of je het de volgende keer op dezelfde manier zal aanpakken of dat je voor een andere aanpak kiest.

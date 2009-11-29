@@ -1,0 +1,1 @@
+In je ontwerp neem je mee: verkopen (inclusief reizen), HRM en voorraad en logistiek. De andere units hoef je niet te beschrijven.

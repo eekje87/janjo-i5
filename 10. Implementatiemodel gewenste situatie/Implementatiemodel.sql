@@ -1,4 +1,5 @@
---PRODUCT
+--VERSIE 0.4
+
 CREATE TABLE Product_line(
 	Product_line_code INTEGER NOT NULL,
 	Product_line_en NVARCHAR(40) NOT NULL,
@@ -12,7 +13,7 @@ CREATE TABLE Product_type(
 PRIMARY KEY(Product_type_code),
 FOREIGN KEY Product_line_code REFERENCES Product_line
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+	ON UPDATE CASCADE
 );
 
 CREATE TABLE product(
@@ -26,10 +27,9 @@ CREATE TABLE product(
 PRIMARY KEY(Product_number),
 FOREIGN KEY Product_type_code REFERENCES Product_type
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+	ON UPDATE CASCADE
 );
 
---MEDEWERKERS
 CREATE TABLE Sales_Branche(
 	Sales_branche_code INTEGER NOT NULL,
 	Address1 NVARCHAR(50) NOT NULL,
@@ -39,39 +39,27 @@ CREATE TABLE Sales_Branche(
 	Postal_zone NVARCHAR(10),
 	Country_code INTEGER NOT NULL,
 PRIMARY KEY(Sales_branche_code),
-FOREIGN KEY Country_code REFERENCES Country
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
 );
 
-CREATE TABLE Bonus(
-	Bonus_id INTEGER NOT NULL,
-	Werknemer_id INTEGER NOT NULL,
-	Datum DATE NOT NULL,
-	Bedrag DOUBLE NOT NULL,
-PRIMARY KEY(Bonus_id),
-FOREIGN KEY Werknemer_id REFERENCES Werknemer
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+CREATE TABLE Werknemer_CV (
+	Id INTEGER NOT NULL,
+	Werkervaring VARCHAR(500) NULL,
+	Opleidingen VARCHAR(500) NULL,
+	Bijzonderheden VARCHAR(500) NULL,
+PRIMARY KEY(Id)
 );
 
-CREATE TABLE Sales_target(
-	Werknemer_id INTEGER NOT NULL,
-	Sales_year INTEGER NOT NULL,
-	Sales_period INTEGER NOT NULL,
-	Product_Number INTEGER NOT NULL,
-	Sales_target FLOAT NOT NULL, 
-	Retailer_code INTEGER NOT NULL,
-PRIMARY KEY(Werknemer_id, Sales_year, Sales_period, Product_Number, Retailer_code),
-FOREIGN KEY Werknemer_id REFERENCES werknemer
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Product_Number REFERENCES Product
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Retailer_code REFERENCES Retailer
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+CREATE TABLE Werknemer_Prestatieniveau (
+	Prestatieniveau_id INTEGER NOT NULL,
+	Omschrijving VARCHAR(50) NOT NULL,
+PRIMARY KEY(Prestatieniveau_id)
+);
+
+CREATE TABLE Afdeling (
+	Afdeling_id INTEGER NOT NULL,
+	Omschrijving VARCHAR(50) NOT NULL,
+	Manager INTEGER NOT NULL,
+PRIMARY KEY(Afdeling_id)
 );
 
 CREATE TABLE werknemer (
@@ -94,42 +82,78 @@ CREATE TABLE werknemer (
 	Datum_uit_dienst DATE,
 	Prestatie_niveau INTEGER,
 PRIMARY KEY(Werknemer_id),
-FOREIGN KEY Functie REFERENCES Functie
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
 FOREIGN KEY Sales_branche_code REFERENCES Sales_branche
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Afdeling REFERENCES Afdeling
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
 FOREIGN KEY Manager REFERENCES werknemer
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
 FOREIGN KEY CV REFERENCES werknemer_cv
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Prestatie_niveau REFERENCES Prestatieniveau
+	ON UPDATE CASCADE,
+FOREIGN KEY Prestatie_niveau REFERENCES Werknemer_Prestatieniveau
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
+FOREIGN KEY Afdeling REFERENCES Afdeling
+	ON DELETE RESTRICT
+	ON UPDATE CASCADE,
 CHECK(date_hired > Geboortedatum),
 CHECK(date_hired < Datum_uit_dienst),
 CHECK(Salaris >= 950)
 );
 
---HRM
-CREATE TABLE Werknemer_Prestatieniveau (
-	Prestatieniveau _id INTEGER NOT NULL,
-	Omschrijving VARCHAR(50) NOT NULL,
-PRIMARY KEY(Prestatieniveau_id)
+ALTER TABLE Afdeling
+	ADD FOREIGN KEY(Manager) REFERENCES Medewerker
+	ON DELETE RESTRICT,
+	ON UPDATE CASCADE;
+
+CREATE TABLE Functioneringsgesprek (
+	Id INTEGER NOT NULL,
+	Werknemer INTEGER NOT NULL,
+	Datum DATE NOT NULL,
+	Opmerking VARCHAR(500),
+PRIMARY KEY(Id),
+FOREIGN KEY Werknemer REFERENCES Werknemer
+	ON DELETE DELETE
+	ON UPDATE CASCADE
 );
 
-CREATE TABLE Werknemer_CV (
-	Id INTEGER NOT NULL,
-	Werkervaring VARCHAR(500) NULL,
-	Opleidingen VARCHAR(500) NULL,
-	Bijzonderheden VARCHAR(500) NULL,
-PRIMARY KEY(Id)
+CREATE TABLE Bonus(
+	Bonus_id INTEGER NOT NULL,
+	Werknemer_id INTEGER NOT NULL,
+	Datum DATE NOT NULL,
+	Bedrag DOUBLE NOT NULL,
+PRIMARY KEY(Bonus_id),
+FOREIGN KEY Werknemer_id REFERENCES Werknemer
+	ON DELETE RESTRICT
+	ON UPDATE CASCADE
+);
+
+CREATE TABLE Klant(
+	Klant_id INTEGER NOT NULL,
+	klant_codemr INTEGER,
+	Naam NVARCHAR(50) NOT NULL,
+	Klant_type INTEGER NOT NULL,
+PRIMARY KEY(Klant_id)
+);
+
+CREATE TABLE Sales_target(
+	Werknemer_id INTEGER NOT NULL,
+	Sales_year INTEGER NOT NULL,
+	Sales_period INTEGER NOT NULL,
+	Product_Number INTEGER NOT NULL,
+	Sales_target FLOAT NOT NULL, 
+	Retailer_code INTEGER NOT NULL,
+PRIMARY KEY(Werknemer_id, Sales_year, Sales_period, Product_Number, Retailer_code),
+FOREIGN KEY Werknemer_id REFERENCES werknemer
+	ON DELETE RESTRICT
+	ON UPDATE RESTRICT, --Deel van PK
+FOREIGN KEY Product_Number REFERENCES Product
+	ON DELETE RESTRICT
+	ON UPDATE RESTRICT, --Deel van PK
+FOREIGN KEY Retailer_code REFERENCES Klant
+	ON DELETE RESTRICT
+	ON UPDATE RESTRICT --Deel van PK
 );
 
 CREATE TABLE Cursus(
@@ -148,13 +172,12 @@ CREATE TABLE Training(
 PRIMARY KEY(Training_id),
 FOREIGN KEY Werknemer_id REFERENCES werknemer
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
 FOREIGN KEY Course REFERENCES Cursus
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+	ON UPDATE CASCADE
 );
 
---ORDERS
 CREATE TABLE Order_header(
 	Order_Number INTEGER NOT NULL,
 	Retailer_site_code INTEGER NOT NULL,
@@ -166,21 +189,9 @@ CREATE TABLE Order_header(
 	Korting_percentage DOUBLE,
 	Status INTEGER NOT NULL,
 PRIMARY KEY(Order_Number),
-FOREIGN KEY Retailer_site_code REFERENCES Retailer_site
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
 FOREIGN KEY Werknemer_id REFERENCES werknemer
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Sales_branche_code REFERENCES Sales_brache
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Order_method_code REFERENCES Order_method
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
-FOREIGN KEY Status REFERENCES Order_status
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
 CHECK (Korting_percentage <= 8)
 );
 
@@ -195,48 +206,32 @@ CREATE TABLE Order_details(
 PRIMARY KEY(Order_detail_code),
 FOREIGN KEY Order_number REFERENCES Order_header
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT,
+	ON UPDATE CASCADE,
 FOREIGN KEY Product_number REFERENCES product
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+	ON UPDATE CASCADE
 );
 
---CUSTOMER
-CREATE TABLE Klant(
-	Klant_id INTEGER NOT NULL,
-	Klant_naam VARCHAR(100) NOT NULL,
-	Straat VARCHAR() NOT NULL,
-	Huisnummer INTEGER NOT NULL, 
-	Huisnummer_toev VARCHAR(10) NULL,
-	Postcode VARCHAR(6) NOT NULL,
-	Woonplaats VARCHAR(50) NOT NULL,
-PRIMARY KEY(Klant_id)
+CREATE TABLE Magazijn (
+	Id INTEGER NOT NULL,
+	Locatie VARCHAR(50) NOT NULL,
+PRIMARY KEY(Id)
 );
 
-CREATE TABLE Retailer (
-	Retailer_code INTEGER NOT NULL,
-	Retailer_codemr INTEGER,
-	Company_Name NVARCHAR(50) NOT NULL,
-	Retailer_type_code INTEGER NOT NULL,
-PRIMARY KEY(Retailer_code),
-FOREIGN KEY Retailer_type_code REFERENCES Retailer_type
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
-);
-
---VOORRAAD EN LOGISTIEK
----HIER MISSSEN NOG GEGEVENS OVER DE LOGISTIEK!!!
 CREATE TABLE Inventory_levels(
 	Inventory_year SMALLINT NOT NULL,
 	Inventory_month SMALLINT NOT NULL,
 	Product_number INTEGER NOT NULL,
+	Magazijn INTEGER NOT NULL,
 	Inventory_count INTEGER NOT NULL,
-	Min_Voorraad INTEGER NOT NULL,
 	Verwachte_levertijd INTEGER,
-PRIMARY KEY(Inventory_year, Inventory_month, Product_number),
+PRIMARY KEY(Inventory_year, Inventory_month, Product_number, Magazijn),
 FOREIGN KEY Product_number REFERENCES product
 	ON DELETE RESTRICT
-	ON UPDATE RESTRICT
+	ON UPDATE RESTRICT, --Deel van PK
+FOREIGN KEY Magazijn REFERENCES Magazijn
+	ON DELETE RESTRICT
+	ON UPDATE RESTRICT, --Deel van PK
 );
 
 -------------
@@ -297,8 +292,9 @@ AS
 BEGIN
 	DECLARE totaalTeBetalen FLOAT
 	DECLARE totaalBetaald FLOAT
+	DECLARE orderNumber INT
 	
-	IF (SELECT  FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = Factuur_nummer) = "Order"
+	IF EXISTS(SELECT * FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = Factuur_nummer) = "Order"
 	BEGIN --ORDER
 		SELECT 
 			SUM(OD.Unit_sale_price * OD.Quantity) INTO totaalTeBetalen 
@@ -319,8 +315,19 @@ BEGIN
 	FROM Betaling B 
 	WHERE B.Factuur_id = Factuur_nummer
 	
-	IF totaalTeBetalen >= totaalBetaald
-		--VERPLAATSEN NAAR ANDERE TABEL ???
+	IF totaalTeBetalen >= totaalBetaald AND EXISTS(SELECT * FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = Factuur_nummer) = "Order"
+	BEGIN
+		SELECT F.Factuur_bron INTO orderNumber FROM Factuur F WHERE F.id = Factuur_id
+		
+		INSERT INTO Order_details_Verwerkt
+		SELECT * FROM Order_details WHERE Order_number = orderNumber
+		
+		INSERT INTO Order_header_verwerkt
+		SELECT * FROM Order_header WHERE Order_number = orderNumber
+		
+		DELETE FROM Order_details_Verwerkt WHERE Order_number = orderNumber
+		DELETE FROM Order_header_verwerkt WHERE Order_number = orderNumber
+	END
 END
 
 -------------
@@ -332,7 +339,7 @@ BEFORE INSERT ON werknemer
 FOR EACH ROW
 BEGIN
 	DECLARE aantalMedewerkers INTEGER
-	SELECT COUNT(*) INTO aantalMedewerkers FROM werknemers WHERE manager = new.werknemer_id
+	SELECT COUNT(*) INTO aantalMedewerkers FROM werknemers WHERE manager = new.manager
 	
 	IF aantalMedewerkers >= 12
 		ROLLBACK

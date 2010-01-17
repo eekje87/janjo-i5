@@ -1,0 +1,13 @@
+?	Iedere unit heeft een manager.
+?	Een manager (bijvoorbeeld van de salesstaff, de werknemers), heeft een span of control van 12. Bij toevoegen van een werknemer moet hierop gecontroleerd worden, manager moet uiteraard als functie manager hebben.
+?	De verkoopmedewerkers (Sales representatives) mogen alleen klanten (customers of retailers) in hun eigen regio vertegenwoordigen. Dit geldt ook voor de employees van A&C. Bij toevoegen van een order moet hierop gecontroleerd worden.
+?	Bij sommige klanten (customers) staat aangegeven dat zij slechts een maximaal aantal producten mogen afnemen. Hierop moet gecontroleerd worden.
+?	Voorraad moet bijgewerkt worden bij een bestelling. Indien de voorraad beneden een bepaalde waarde komt, per producttype bestaat een maximum 1 t/m 10 500; 11 t/m 21 750), moet een melding komen dat er besteld moet worden.
+?	Datum moet in alle gevallen correct zijn, datum in dienst na geboortedatum, datum ontslag na datum in dienst, datum verzenden order na datum bestelling etc.
+?	Salarissen moeten in overeenstemming zijn met de functies.
+?	Volgorde in status bestelling is dwingend (op transport komt na in magazijn bijvoorbeeld)
+?	Orders die geheel verwerkt zijn worden apart opgeslagen.
+?	Er mag maximaal 8% korting gegeven worden.
+?	Indien een medewerker zijn target niet haalt, wordt er geen bonus gegeven. Als de target 6 keer niet gehaald wordt, wordt er gekort op het salaris.
+?	Een medewerker mag niet meer verdienen dan zijn manager
+?	Salaris mag nooit lager zijn dan het wettelijk minimumloon.

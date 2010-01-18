@@ -1,21 +1,26 @@
 --VERSIE 0.4
 
+/*
+Script is gemaakt voor SQL Server 2008 
+De foreign keys zijn automatisch restricted t.o.v. primary keys
+*/
+
+--OK
 CREATE TABLE Product_line(
 	Product_line_code INTEGER NOT NULL,
 	Product_line_en NVARCHAR(40) NOT NULL,
 PRIMARY KEY(Product_line_code)
 );
-
+--OK
 CREATE TABLE Product_type(
 	Product_type_code INTEGER NOT NULL,
 	Product_line_code INTEGER,
 	Product_type_en INTEGER NOT NULL,
 PRIMARY KEY(Product_type_code),
-FOREIGN KEY Product_line_code REFERENCES Product_line
-	ON DELETE RESTRICT
-	ON UPDATE CASCADE
+CONSTRAINT fk_pl FOREIGN KEY (Product_line_code) REFERENCES Product_line
+ON UPDATE CASCADE
 );
-
+--OK
 CREATE TABLE product(
 	Product_number INTEGER NOT NULL,
 	Introduction_date DATE NOT NULL,
@@ -25,11 +30,11 @@ CREATE TABLE product(
 	Product_image NVARCHAR(150) NOT NULL,
 	Product_name NVARCHAR(255) NOT NULL,
 PRIMARY KEY(Product_number),
-FOREIGN KEY Product_type_code REFERENCES Product_type
-	ON DELETE RESTRICT
+CONSTRAINT fk_pt FOREIGN KEY (Product_type_code) REFERENCES Product_type
 	ON UPDATE CASCADE
 );
 
+--OK
 CREATE TABLE Sales_Branche(
 	Sales_branche_code INTEGER NOT NULL,
 	Address1 NVARCHAR(50) NOT NULL,
@@ -41,27 +46,31 @@ CREATE TABLE Sales_Branche(
 PRIMARY KEY(Sales_branche_code),
 );
 
+--OK
 CREATE TABLE Werknemer_CV (
-	Id INTEGER NOT NULL,
+	Id INTEGER NOT NULL IDENTITY(1,1),
 	Werkervaring VARCHAR(500) NULL,
 	Opleidingen VARCHAR(500) NULL,
 	Bijzonderheden VARCHAR(500) NULL,
 PRIMARY KEY(Id)
 );
 
+--OK
 CREATE TABLE Werknemer_Prestatieniveau (
-	Prestatieniveau_id INTEGER NOT NULL,
+	Prestatieniveau_id INTEGER NOT NULL IDENTITY(1,1),
 	Omschrijving VARCHAR(50) NOT NULL,
 PRIMARY KEY(Prestatieniveau_id)
 );
 
+--OK
 CREATE TABLE Afdeling (
-	Afdeling_id INTEGER NOT NULL,
+	Afdeling_id INTEGER NOT NULL IDENTITY(1,1),
 	Omschrijving VARCHAR(50) NOT NULL,
 	Manager INTEGER NOT NULL,
 PRIMARY KEY(Afdeling_id)
 );
 
+--OK
 CREATE TABLE werknemer (
 	Werknemer_id INTEGER NOT NULL,
 	First_name NVARCHAR(25) NOT NULL,
@@ -75,60 +84,57 @@ CREATE TABLE werknemer (
 	Sales_branche_code INTEGER NOT NULL,
 	Afdeling INTEGER NOT NULL,
 	Manager INTEGER,
-	Max_korting_percentage DOUBLE,
+	Max_korting_percentage DECIMAL(19,2),
 	CV INTEGER NOT NULL,
-	Salaris DOUBLE NOT NULL,
+	Salaris DECIMAL(19,2) NOT NULL,
 	Geboortedatum DATE NOT NULL,
 	Datum_uit_dienst DATE,
 	Prestatie_niveau INTEGER,
 PRIMARY KEY(Werknemer_id),
-FOREIGN KEY Sales_branche_code REFERENCES Sales_branche
-	ON DELETE RESTRICT
+CONSTRAINT fk_sb FOREIGN KEY (Sales_branche_code) REFERENCES Sales_branche
 	ON UPDATE CASCADE,
-FOREIGN KEY Manager REFERENCES werknemer
-	ON DELETE RESTRICT
+CONSTRAINT fk_m FOREIGN KEY (Manager) REFERENCES werknemer,
+	--Hier kan geen onupdate cascade, omdat er dan een kruisverwijzing gemaakt kan worden...
+CONSTRAINT fk_cv FOREIGN KEY (CV) REFERENCES werknemer_cv
 	ON UPDATE CASCADE,
-FOREIGN KEY CV REFERENCES werknemer_cv
-	ON DELETE RESTRICT
+CONSTRAINT fk_pn FOREIGN KEY (Prestatie_niveau) REFERENCES Werknemer_Prestatieniveau
 	ON UPDATE CASCADE,
-FOREIGN KEY Prestatie_niveau REFERENCES Werknemer_Prestatieniveau
-	ON DELETE RESTRICT
-	ON UPDATE CASCADE,
-FOREIGN KEY Afdeling REFERENCES Afdeling
-	ON DELETE RESTRICT
+CONSTRAINT fn_a FOREIGN KEY (Afdeling) REFERENCES Afdeling
 	ON UPDATE CASCADE,
 CHECK(date_hired > Geboortedatum),
 CHECK(date_hired < Datum_uit_dienst),
 CHECK(Salaris >= 950)
 );
 
+--OK
 ALTER TABLE Afdeling
-	ADD FOREIGN KEY(Manager) REFERENCES Medewerker
-	ON DELETE RESTRICT,
-	ON UPDATE CASCADE;
+	ADD CONSTRAINT fk_man FOREIGN KEY(Manager) REFERENCES Werknemer;
+--Hier kan geen onupdate cascade, omdat er dan een kruisverwijzing gemaakt kan worden...
 
+--OK
 CREATE TABLE Functioneringsgesprek (
-	Id INTEGER NOT NULL,
+	Id INTEGER NOT NULL IDENTITY(1,1),
 	Werknemer INTEGER NOT NULL,
 	Datum DATE NOT NULL,
 	Opmerking VARCHAR(500),
 PRIMARY KEY(Id),
-FOREIGN KEY Werknemer REFERENCES Werknemer
-	ON DELETE DELETE
+CONSTRAINT fk_w FOREIGN KEY (Werknemer) REFERENCES Werknemer
+	ON DELETE CASCADE
 	ON UPDATE CASCADE
 );
 
+--OK
 CREATE TABLE Bonus(
-	Bonus_id INTEGER NOT NULL,
+	Bonus_id INTEGER NOT NULL IDENTITY(1,1),
 	Werknemer_id INTEGER NOT NULL,
 	Datum DATE NOT NULL,
-	Bedrag DOUBLE NOT NULL,
+	Bedrag DECIMAL(19,2) NOT NULL,
 PRIMARY KEY(Bonus_id),
-FOREIGN KEY Werknemer_id REFERENCES Werknemer
-	ON DELETE RESTRICT
+CONSTRAINT fk_wn FOREIGN KEY (Werknemer_id) REFERENCES Werknemer
 	ON UPDATE CASCADE
 );
 
+--OK
 CREATE TABLE Klant(
 	Klant_id INTEGER NOT NULL,
 	klant_codemr INTEGER,
@@ -137,6 +143,7 @@ CREATE TABLE Klant(
 PRIMARY KEY(Klant_id)
 );
 
+--OK
 CREATE TABLE Sales_target(
 	Werknemer_id INTEGER NOT NULL,
 	Sales_year INTEGER NOT NULL,
@@ -145,39 +152,37 @@ CREATE TABLE Sales_target(
 	Sales_target FLOAT NOT NULL, 
 	Retailer_code INTEGER NOT NULL,
 PRIMARY KEY(Werknemer_id, Sales_year, Sales_period, Product_Number, Retailer_code),
-FOREIGN KEY Werknemer_id REFERENCES werknemer
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT, --Deel van PK
-FOREIGN KEY Product_Number REFERENCES Product
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT, --Deel van PK
-FOREIGN KEY Retailer_code REFERENCES Klant
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT --Deel van PK
+CONSTRAINT fk_wnr FOREIGN KEY (Werknemer_id) REFERENCES werknemer
+	ON DELETE CASCADE, --Deel van PK
+CONSTRAINT fk_pnr FOREIGN KEY (Product_Number) REFERENCES Product
+	ON DELETE CASCADE, --Deel van PK
+CONSTRAINT fk_rc FOREIGN KEY (Retailer_code) REFERENCES Klant
+	ON DELETE CASCADE --Deel van PK
 );
 
+--OK
 CREATE TABLE Cursus(
-	Cursus_id INTEGER NOT NULL,
+	Cursus_id INTEGER NOT NULL IDENTITY(1,1),
 	Naam VARCHAR(50) NOT NULL,
 	Datum DATE NOT NULL,
 PRIMARY KEY(Cursus_id)
 );
 
+--OK
 CREATE TABLE Training(
-	Training_id INTEGER NOT NULL,
+	Training_id INTEGER NOT NULL IDENTITY(1,1),
 	Datum DATE NOT NULL,
 	Werknemer_id INT NOT NULL,
 	Course INT NOT NULL,
-	Geslaagd BOOLEAN NOT NULL
+	Geslaagd BIT NOT NULL
 PRIMARY KEY(Training_id),
-FOREIGN KEY Werknemer_id REFERENCES werknemer
-	ON DELETE RESTRICT
+CONSTRAINT fk_wnrid FOREIGN KEY (Werknemer_id) REFERENCES werknemer
 	ON UPDATE CASCADE,
-FOREIGN KEY Course REFERENCES Cursus
-	ON DELETE RESTRICT
+CONSTRAINT fk_c FOREIGN KEY (Course) REFERENCES Cursus
 	ON UPDATE CASCADE
 );
 
+--OK
 CREATE TABLE Order_header(
 	Order_Number INTEGER NOT NULL,
 	Retailer_site_code INTEGER NOT NULL,
@@ -186,15 +191,15 @@ CREATE TABLE Order_header(
 	Sales_branche_code INTEGER NOT NULL,
 	Order_date DATE NOT NULL,
 	Order_method_code INTEGER NOT NULL,
-	Korting_percentage DOUBLE,
-	Status INTEGER NOT NULL,
+	Korting_percentage DECIMAL(19,2),
+	[Status] INTEGER NOT NULL,
 PRIMARY KEY(Order_Number),
-FOREIGN KEY Werknemer_id REFERENCES werknemer
-	ON DELETE RESTRICT
+CONSTRAINT fk_wnid2 FOREIGN KEY (Werknemer_id) REFERENCES werknemer
 	ON UPDATE CASCADE,
 CHECK (Korting_percentage <= 8)
 );
 
+--OK
 CREATE TABLE Order_details(
 	Order_detail_code INTEGER NOT NULL,
 	Order_number INTEGER NOT NULL,
@@ -204,20 +209,20 @@ CREATE TABLE Order_details(
 	Unit_price FLOAT,
 	Unit_sale_price FLOAT,
 PRIMARY KEY(Order_detail_code),
-FOREIGN KEY Order_number REFERENCES Order_header
-	ON DELETE RESTRICT
+CONSTRAINT fk_on FOREIGN KEY (Order_number) REFERENCES Order_header
 	ON UPDATE CASCADE,
-FOREIGN KEY Product_number REFERENCES product
-	ON DELETE RESTRICT
+CONSTRAINT fk_pnr2 FOREIGN KEY (Product_number) REFERENCES product
 	ON UPDATE CASCADE
 );
 
+--OK
 CREATE TABLE Magazijn (
 	Id INTEGER NOT NULL,
 	Locatie VARCHAR(50) NOT NULL,
 PRIMARY KEY(Id)
 );
 
+--OK
 CREATE TABLE Inventory_levels(
 	Inventory_year SMALLINT NOT NULL,
 	Inventory_month SMALLINT NOT NULL,
@@ -226,12 +231,8 @@ CREATE TABLE Inventory_levels(
 	Inventory_count INTEGER NOT NULL,
 	Verwachte_levertijd INTEGER,
 PRIMARY KEY(Inventory_year, Inventory_month, Product_number, Magazijn),
-FOREIGN KEY Product_number REFERENCES product
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT, --Deel van PK
-FOREIGN KEY Magazijn REFERENCES Magazijn
-	ON DELETE RESTRICT
-	ON UPDATE RESTRICT, --Deel van PK
+CONSTRAINT fk_pnr3 FOREIGN KEY (Product_number) REFERENCES product,
+CONSTRAINT fk_mg FOREIGN KEY (Magazijn) REFERENCES Magazijn
 );
 
 -------------
@@ -240,120 +241,169 @@ FOREIGN KEY Magazijn REFERENCES Magazijn
 
 --STORED PROCEDURES
 
-CREATE PROCEDURE controleerSalarisMetManager (Werknemer_Salaris IN FLOAT, Manager_id IN INTEGER, Salaris_OK OUT BOOLEAN)
+GO
+
+CREATE PROCEDURE controleerSalarisMetManager (@Werknemer_Salaris FLOAT, @Manager_id INTEGER, @Salaris_OK BIT OUT)
 AS
 BEGIN
-	DECLARE Manager_salaris FLOAT
+	DECLARE @Manager_salaris FLOAT
 
-	SELECT salaris INTO Manager_salaris 
+	--Salaris van de manager ophalen
+	SELECT @Manager_salaris = salaris 
 	FROM werknemer 
-	WHERE Werknemer_id = Manager_id
+	WHERE Werknemer_id = @Manager_id
 	
-	IF Werknemer_Salaris < Manager_salaris --OK
-		SELECT 1 INTO Salaris_OK
+	--Salaris kleiner dan salaris van manager, dan OK
+	IF @Werknemer_Salaris < @Manager_salaris --OK
+		SET @Salaris_OK = 1
 	ELSE --NIET OK
-		SELECT 0 INTO Salaris_OK
+		SET @Salaris_OK = 0
 END
 
-CREATE PROCEDURE controleerBonusGehaald (Medewerker_id IN INTEGER, Jaar IN SMALLINT, Periode IN SMALLINT, Retailer IN INTEGER, vervolgactie OUT VARCHAR(20))
+GO
+
+CREATE PROCEDURE controleerBonusGehaald (@Medewerker_id INTEGER, @Jaar SMALLINT, @Periode SMALLINT, @Retailer INTEGER, @vervolgactie VARCHAR(20) OUT)
 AS
 BEGIN
-	DECLARE aantalProductenNietGehaald INT
-	DECLARE totaalLaatse6Bonussen DOUBLE
+	DECLARE @aantalProductenNietGehaald INT
+	DECLARE @totaalLaatse6Bonussen DECIMAL(19,2)
 
+	--Controleer voor welke producten de target voor deze periode niet gehaald is.
 	SELECT 
-		COUNT(Product_number) INTO aantalProductenNietGehaald
+		@aantalProductenNietGehaald = COUNT(OD.Product_number)
 	FROM Sales_target ST
-		INNER JOIN Order_details OD ON OH.Order_Number = OD.Order_Number
-	WHERE Werknemer_id = Medewerker_id
-		AND Sales_year = Jaar
-		AND Sales_period = Periode
-		AND Retailer_code = Retailer
-		AND Product_number = OD.Product_number
-		AND Sales_target <= SUM(OD.Quantity)
+		INNER JOIN Order_details OD 
+		ON OD.Product_number = ST.Product_Number
+		INNER JOIN Order_header OH
+		ON OH.Order_Number = OD.Order_Number
+	WHERE ST.Werknemer_id = @Medewerker_id
+		AND ST.Sales_year = @Jaar
+		AND ST.Sales_period = @Periode
+		AND ST.Retailer_code = @Retailer
+		AND ST.Sales_target <= SUM(OD.Quantity)
+		AND OH.Werknemer_id = @Medewerker_id
+		AND YEAR(OH.Order_date) = @Jaar
+		AND MONTH(OH.Order_date) = @Periode
 		
-	IF aantalProductenNietGehaald = 0
+	--Wanneer de target is gehaald, dan wel een bonus geven
+	IF @aantalProductenNietGehaald = 0
 	BEGIN
-		INSERT 'wel_bonus' INTO vervolgactie
+		SELECT @vervolgactie = 'wel_bonus'
 	END
 	ELSE
 	BEGIN
-		SELECT SUM(TOP 6 Bedrag) INTO totaalLaatse6Bonussen FROM Bonus WHERE werknemer_id = Medewerker_id ORDER BY Datum DESC)
+		--Als er geen bonus is gegeven, dan is er WEL een entry met bedrag = 0
 		
-		IF totaalLaatse6Bonussen = 0
-			SELECT 'salaris_korten' INTO vervolgactie
+		--Tel de totaal uitgekeerde bonussen van de vorige 6 keer
+		SELECT 
+			COUNT(Bedrag) 
+		FROM Bonus 
+		WHERE Bonus_id IN (SELECT TOP 6 Bonus_id 
+							FROM Bonus 
+							WHERE werknemer_id = @Medewerker_id
+							ORDER BY Datum DESC)
+		
+		--Als het totaal 0 is, dan is de bonus al 6x niet gehaald.
+		IF @totaalLaatse6Bonussen = 0
+			SELECT @vervolgactie = 'salaris_korten'
 		ELSE
-			SELECT 'geen_bonus' INTO vervolgactie
+			SELECT @vervolgactie = 'geen_bonus'
 	END
 END
 
-CREATE PROCEDURE controleerTotaalBetalingen (Factuur_nummer IN INTEGER)
+GO
+
+CREATE PROCEDURE controleerTotaalBetalingen (@Factuur_nummer INTEGER)
 AS
 BEGIN
-	DECLARE totaalTeBetalen FLOAT
-	DECLARE totaalBetaald FLOAT
-	DECLARE orderNumber INT
+	DECLARE @totaalTeBetalen FLOAT
+	DECLARE @totaalBetaald FLOAT
+	DECLARE @orderNumber INT
 	
-	IF EXISTS(SELECT * FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = Factuur_nummer) = "Order"
+	--Als het om een factuur voor een product-bestelling gaat
+	IF (SELECT FBT.Naam FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = @Factuur_nummer) = "Order"
 	BEGIN --ORDER
 		SELECT 
-			SUM(OD.Unit_sale_price * OD.Quantity) INTO totaalTeBetalen 
+			@totaalTeBetalen = SUM(OD.Unit_sale_price * OD.Quantity) 
 		FROM Order_details OD
-			INNER JOIN Factuur F ON OD.Order_detail_code = F.Factuur_bron
-		WHERE F.id = Factuur_id
+			INNER JOIN Factuur F 
+			ON OD.Order_detail_code = F.Factuur_bron
+		WHERE F.id = @Factuur_id
 	END
-	ELSE
+	ELSE --Er zijn maar 2 mogelijkheden, dus als het geen product-bestelling is, dan is het een reisboeking
 	BEGIN --BOEKING
 		SELECT 
-			B.Boekingbedrag INTO totaalTeBetalen 
+			@totaalTeBetalen = B.Boekingbedrag 
 		FROM Boeking B 
-			INNER JOIN Factuur F ON B.Boeking_id = F.Factuur_bron 
-		WHERE F.id = Factuur_id
+			INNER JOIN Factuur F 
+			ON B.Boeking_id = F.Factuur_bron 
+		WHERE F.id = @Factuur_id
 	END
 	
-	SELECT SUM(B.Bedrag) INTO totaalBetaald
+	SELECT @totaalBetaald = SUM(B.Bedrag)
 	FROM Betaling B 
-	WHERE B.Factuur_id = Factuur_nummer
+	WHERE B.Factuur_id = @Factuur_nummer
 	
-	IF totaalTeBetalen >= totaalBetaald AND EXISTS(SELECT * FROM Factuur F INNER JOIN Factuur_bron_type FBT ON F.Factuur_bron_type = FBT.id WHERE F.Factuur_id = Factuur_nummer) = "Order"
+	--Als alles betaald is, dan de bestelling kopieren naar de verwerkt tabel
+	IF @totaalTeBetalen >= @totaalBetaald
 	BEGIN
-		SELECT F.Factuur_bron INTO orderNumber FROM Factuur F WHERE F.id = Factuur_id
+		SELECT @orderNumber = F.Factuur_bron FROM Factuur F WHERE F.id = @Factuur_id
 		
+		--Regels verplaatsen
 		INSERT INTO Order_details_Verwerkt
-		SELECT * FROM Order_details WHERE Order_number = orderNumber
+		SELECT * FROM Order_details WHERE Order_number = @orderNumber
 		
+		--Header verplaatsen
 		INSERT INTO Order_header_verwerkt
-		SELECT * FROM Order_header WHERE Order_number = orderNumber
+		SELECT * FROM Order_header WHERE Order_number = @orderNumber
 		
-		DELETE FROM Order_details_Verwerkt WHERE Order_number = orderNumber
-		DELETE FROM Order_header_verwerkt WHERE Order_number = orderNumber
+		DELETE FROM Order_details_Verwerkt WHERE Order_number = @orderNumber
+		DELETE FROM Order_header_verwerkt WHERE Order_number = @orderNumber
 	END
 END
 
+GO
+
 -------------
 -------------
 -------------
 
-CREATE TRIGGER spanOfControl
-BEFORE INSERT ON werknemer
-FOR EACH ROW
+CREATE TRIGGER spanOfControl ON werknemer
+FOR INSERT, UPDATE
+AS
 BEGIN
-	DECLARE aantalMedewerkers INTEGER
-	SELECT COUNT(*) INTO aantalMedewerkers FROM werknemers WHERE manager = new.manager
+	DECLARE @aantalMedewerkers INTEGER
 	
+	--Tel het aantal werknemers die dezelfde manager hebben.
+	SELECT 
+		@aantalMedewerkers = COUNT(*) 
+	FROM werknemers 
+	WHERE manager = (SELECT manager 
+					FROM Inserted)	
+	
+	--Als er 12 of meer medewerkers zijn met deze manager,
+	--dan mag de toe te voegen werknemer niet worden toegevoegd.
 	IF aantalMedewerkers >= 12
 		ROLLBACK
 END
 
-CREATE TRIGGER controleSalaris
-BEFORE INSERT ON werknemer
-FOR EACH ROW
+GO
+
+CREATE TRIGGER controleSalaris ON werknemer
+FOR INSERT 
+AS
 BEGIN
-	DECLARE minSalaris DOUBLE
-	DECLARE maxSalaris DOUBLE
+	DECLARE @minSalaris MONEY
+	DECLARE @maxSalaris MONEY
+
+	--Haal de max en min salaris op voor de opgegeven functie	
+	SELECT 
+		@minSalaris = salaris_min, 
+		@maxSalaris = salaris_max 
+	FROM Functie 
+	WHERE Functie_id = (SELECT Functie FROM Inserted)
 	
-	SELECT salaris_min INTO minSalaris, salaris_max INTO maxSalaris FROM Functie WHERE Functie_id = new.Functie
-	
-	IF new.Salaris < minSalaris OR new.Salaris > maxSalaris
+	--Als het opgegeven salaris niet tussen het min en max inzit, dan niet doorvoeren 
+	IF NOT ((SELECT Salaris FROM Inserted) BETWEEN @minSalaris AND @maxSalaris)
 		ROLLBACK
 END

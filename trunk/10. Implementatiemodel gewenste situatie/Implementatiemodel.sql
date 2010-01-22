@@ -20,6 +20,7 @@ PRIMARY KEY(Product_type_code),
 CONSTRAINT fk_pl FOREIGN KEY (Product_line_code) REFERENCES Product_line
 ON UPDATE CASCADE
 );
+
 --OK
 CREATE TABLE product(
 	Product_number INTEGER NOT NULL,
@@ -103,7 +104,8 @@ CONSTRAINT fn_a FOREIGN KEY (Afdeling) REFERENCES Afdeling
 	ON UPDATE CASCADE,
 CHECK(date_hired > Geboortedatum),
 CHECK(date_hired < Datum_uit_dienst),
-CHECK(Salaris >= 950)
+CHECK(Salaris >= 950),
+CHECK(Max_korting_percentage <= 8)
 );
 
 --OK
@@ -192,7 +194,7 @@ CREATE TABLE Order_header(
 	Order_date DATE NOT NULL,
 	Order_method_code INTEGER NOT NULL,
 	Korting_percentage DECIMAL(19,2),
-	[Status] INTEGER NOT NULL,
+	[Status	] INTEGER NOT NULL,
 PRIMARY KEY(Order_Number),
 CONSTRAINT fk_wnid2 FOREIGN KEY (Werknemer_id) REFERENCES werknemer
 	ON UPDATE CASCADE,
@@ -223,7 +225,7 @@ PRIMARY KEY(Id)
 );
 
 --OK
-CREATE TABLE Inventory_levels(
+CREATE TABLE Inventory_levels (
 	Inventory_year SMALLINT NOT NULL,
 	Inventory_month SMALLINT NOT NULL,
 	Product_number INTEGER NOT NULL,
@@ -243,6 +245,7 @@ CONSTRAINT fk_mg FOREIGN KEY (Magazijn) REFERENCES Magazijn
 
 GO
 
+--OK
 CREATE PROCEDURE controleerSalarisMetManager (@Werknemer_Salaris FLOAT, @Manager_id INTEGER, @Salaris_OK BIT OUT)
 AS
 BEGIN
@@ -262,6 +265,7 @@ END
 
 GO
 
+--OK
 CREATE PROCEDURE controleerBonusGehaald (@Medewerker_id INTEGER, @Jaar SMALLINT, @Periode SMALLINT, @Retailer INTEGER, @vervolgactie VARCHAR(20) OUT)
 AS
 BEGIN
@@ -280,10 +284,11 @@ BEGIN
 		AND ST.Sales_year = @Jaar
 		AND ST.Sales_period = @Periode
 		AND ST.Retailer_code = @Retailer
-		AND ST.Sales_target <= SUM(OD.Quantity)
 		AND OH.Werknemer_id = @Medewerker_id
 		AND YEAR(OH.Order_date) = @Jaar
 		AND MONTH(OH.Order_date) = @Periode
+	GROUP BY OD.Product_number, ST.Sales_target
+	HAVING ST.Sales_target <= SUM(OD.Quantity)
 		
 	--Wanneer de target is gehaald, dan wel een bonus geven
 	IF @aantalProductenNietGehaald = 0
@@ -313,6 +318,15 @@ END
 
 GO
 
+/*Deze SP kan niet worden doorgevoerd omdat de tabellen 
+	Factuur, 
+	Factuur_bron, 
+	Factuur_bron_type,
+	Boeking,
+	Betaling
+niet aan de database zijn toegevoegd, omdat dit niet in de opdracht stond.
+De code van deze SP is daarom ook niet getest.
+*/
 CREATE PROCEDURE controleerTotaalBetalingen (@Factuur_nummer INTEGER)
 AS
 BEGIN
@@ -329,6 +343,7 @@ BEGIN
 			INNER JOIN Factuur F 
 			ON OD.Order_detail_code = F.Factuur_bron
 		WHERE F.id = @Factuur_id
+		GROUP BY F.id
 	END
 	ELSE --Er zijn maar 2 mogelijkheden, dus als het geen product-bestelling is, dan is het een reisboeking
 	BEGIN --BOEKING
@@ -343,6 +358,7 @@ BEGIN
 	SELECT @totaalBetaald = SUM(B.Bedrag)
 	FROM Betaling B 
 	WHERE B.Factuur_id = @Factuur_nummer
+	GROUP BY B.Factuur_id
 	
 	--Als alles betaald is, dan de bestelling kopieren naar de verwerkt tabel
 	IF @totaalTeBetalen >= @totaalBetaald
@@ -367,7 +383,7 @@ GO
 -------------
 -------------
 -------------
-
+--OK
 CREATE TRIGGER spanOfControl ON werknemer
 FOR INSERT, UPDATE
 AS
@@ -383,12 +399,13 @@ BEGIN
 	
 	--Als er 12 of meer medewerkers zijn met deze manager,
 	--dan mag de toe te voegen werknemer niet worden toegevoegd.
-	IF aantalMedewerkers >= 12
+	IF @aantalMedewerkers >= 12
 		ROLLBACK
 END
 
 GO
 
+--OK
 CREATE TRIGGER controleSalaris ON werknemer
 FOR INSERT 
 AS
@@ -407,3 +424,38 @@ BEGIN
 	IF NOT ((SELECT Salaris FROM Inserted) BETWEEN @minSalaris AND @maxSalaris)
 		ROLLBACK
 END
+
+GO
+
+--OK
+CREATE TRIGGER checkLocatieWerknemer ON Order_header
+FOR INSERT
+AS
+BEGIN
+	/* 
+	Sales_brache ophalen van de toegevoegde order;
+	Deze moet gelijk zijn aan de sales_branche van de toevoegende medewerker
+	*/
+	IF (SELECT Sales_branche_code FROM Inserted) <> (SELECT Sales_branche_code FROM Werknemer WHERE werknemer_id = (SELECT werknemer_id FROM Inserted))
+	BEGIN
+		ROLLBACK
+	END
+END
+
+GO
+
+--OK
+CREATE TRIGGER checkStatusVolgorde ON Order_header
+FOR UPDATE
+AS
+BEGIN
+	/*
+	Een statusverandering mag alleen naar een status met een id dat 1 hoger ligt
+	*/
+	IF (SELECT [status] FROM Inserted) <= ((SELECT [status] FROM Order_Header WHERE Order_Number = (SELECT Order_Number FROM Inserted)) + 1)
+	BEGIN
+		ROLLBACK
+	END
+END
+
+GO

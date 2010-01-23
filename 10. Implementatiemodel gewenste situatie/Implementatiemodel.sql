@@ -1,4 +1,4 @@
---VERSIE 0.4
+--VERSIE 0.5
 
 /*
 Script is gemaakt voor SQL Server 2008 
@@ -30,6 +30,9 @@ CREATE TABLE product(
 	Margin FLOAT NOT NULL,
 	Product_image NVARCHAR(150) NOT NULL,
 	Product_name NVARCHAR(255) NOT NULL,
+	[Description] NVARCHAR(255),
+	Size NVARCHAR(255),
+	Color NVARCHAR(255), 
 PRIMARY KEY(Product_number),
 CONSTRAINT fk_pt FOREIGN KEY (Product_type_code) REFERENCES Product_type
 	ON UPDATE CASCADE
@@ -175,12 +178,12 @@ CREATE TABLE Training(
 	Training_id INTEGER NOT NULL IDENTITY(1,1),
 	Datum DATE NOT NULL,
 	Werknemer_id INT NOT NULL,
-	Course INT NOT NULL,
+	Cursus INT NOT NULL,
 	Geslaagd BIT NOT NULL
 PRIMARY KEY(Training_id),
 CONSTRAINT fk_wnrid FOREIGN KEY (Werknemer_id) REFERENCES werknemer
 	ON UPDATE CASCADE,
-CONSTRAINT fk_c FOREIGN KEY (Course) REFERENCES Cursus
+CONSTRAINT fk_c FOREIGN KEY (Cursus) REFERENCES Cursus
 	ON UPDATE CASCADE
 );
 

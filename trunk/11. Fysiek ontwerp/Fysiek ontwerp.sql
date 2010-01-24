@@ -1,8 +1,7 @@
 /*	
-	Fysiek ontwerp v0.2
-	Secundaire indexen referentie Implementatiemodel v0.3
+	Fysiek ontwerp v0.3
+	Secundaire indexen referentie Implementatiemodel v0.5
 */
-
 
 -- PRODUCT
 
@@ -16,11 +15,11 @@ CREATE INDEX idx_Product_name
 -- MEDEWERKERS
 
 /*	Afgezien van de PK is de verwachting dat er veel gezochat zal gaan worden
-		op Country_code en/ of Address1. */
+		op Country_code en/ of Postcode. */
 CREATE INDEX idx_Country_code
 	ON Sales_Branche (Country_code ASC);
-CREATE INDEX idx_Address1
-	ON Sales_Branche (Address1 ASC);
+CREATE INDEX idx_Postal_zone
+	ON Sales_Branche (Postal_zone ASC);
 
 /*	Om de SP controleerBonusGehaald vlot te kunnen laten verlopen wordt
 		er een index gemaakt op Werknemer_id. */
@@ -79,9 +78,9 @@ CREATE INDEX idx_Klant_naam
 	ON Klant (Klant_naam ASC);
 
 /*	Afgezien van de PK is de verwachting dat er veel gezocht zal gaan worden
-		op Retailer_type_code. */
-CREATE INDEX idx_Retailer_type_code
-	ON Retailer (Retailer_type_code ASC);
+		op Klant_type. */
+CREATE INDEX idx_Klant_type
+	ON Klant (Klant_type ASC);
 
 -- VOORRAAD EN LOGISTIEK
 

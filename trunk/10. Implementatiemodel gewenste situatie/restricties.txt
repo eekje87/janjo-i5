@@ -1,16 +1,19 @@
-DDL ?	Iedere unit heeft een manager.
-TRIGGER ?	Een manager (bijvoorbeeld van de salesstaff, de werknemers), heeft een span of control van 12. Bij toevoegen van een werknemer moet hierop gecontroleerd worden, manager moet uiteraard als functie manager hebben.
+DDL - Iedere unit heeft een manager.
+
+TRIGGER - Een manager (bijvoorbeeld van de salesstaff, de werknemers), heeft een span of control van 12. Bij toevoegen van een werknemer moet hierop gecontroleerd worden, manager moet uiteraard als functie manager hebben.
 TRIGGER - De verkoopmedewerkers (Sales representatives) mogen alleen klanten (customers of retailers) in hun eigen regio vertegenwoordigen. Dit geldt ook voor de employees van A&C. Bij toevoegen van een order moet hierop gecontroleerd worden.
---NIET_GEMODELEERD-- - Bij sommige klanten (customers) staat aangegeven dat zij slechts een maximaal aantal producten mogen afnemen. Hierop moet gecontroleerd worden.
-?	Voorraad moet bijgewerkt worden bij een bestelling. Indien de voorraad beneden een bepaalde waarde komt, per producttype bestaat een maximum 1 t/m 10 500; 11 t/m 21 750), moet een melding komen dat er besteld moet worden.
-CONSTRAINT - Datum moet in alle gevallen correct zijn, datum in dienst na geboortedatum, datum ontslag na datum in dienst, datum verzenden order na datum bestelling etc.
 TRIGGER - Salarissen moeten in overeenstemming zijn met de functies.
 TRIGGER - Volgorde in status bestelling is dwingend (op transport komt na in magazijn bijvoorbeeld)
-SP - Orders die geheel verwerkt zijn worden apart opgeslagen.
+TRIGGER - Voorraad moet bijgewerkt worden bij een bestelling. Indien de voorraad beneden een bepaalde waarde komt, per producttype bestaat een maximum 1 t/m 10 500; 11 t/m 21 750), moet een melding komen dat er besteld moet worden.
+TRIGGER - Bij sommige klanten (customers) staat aangegeven dat zij slechts een maximaal aantal producten mogen afnemen. Hierop moet gecontroleerd worden.
+
+CONSTRAINT - Datum moet in alle gevallen correct zijn, datum in dienst na geboortedatum, datum ontslag na datum in dienst, datum verzenden order na datum bestelling etc.
 CONSTRAINT - Er mag maximaal 8% korting gegeven worden.
+CONSTRAINT - Salaris mag nooit lager zijn dan het wettelijk minimumloon.
+
+SP - Orders die geheel verwerkt zijn worden apart opgeslagen.
 SP - Indien een medewerker zijn target niet haalt, wordt er geen bonus gegeven. Als de target 6 keer niet gehaald wordt, wordt er gekort op het salaris.
 SP - Een medewerker mag niet meer verdienen dan zijn manager
-CONSTRAINT - Salaris mag nooit lager zijn dan het wettelijk minimumloon.
 
 --OK
 TABELLEN
@@ -19,3 +22,9 @@ orderheader/orderdetail-sales_order/sales_order_item, (=Order_header, Order_deta
 product van beide organisaties, (=Product)
 sales_branch-department, (=Sales_branche)
 training en cursus van GO (-Cursus, training)	
+
+RECHTEN
+Roles: Medewerker, HRM, Manager
+Users: med_hrm, med_mngr, med
+
+HRM: Werknemers bewerken, CV's bewerken, 
